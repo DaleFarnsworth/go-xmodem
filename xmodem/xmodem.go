@@ -111,15 +111,15 @@ func sendBlock(c io.ReadWriter, block int, data []byte, packetPayloadLen int) er
 	return nil
 }
 
-func ModemSend(c io.ReadWriter, data []byte) error {
-	return modemSend(c, data, SHORT_PACKET_PAYLOAD_LEN)
+func ModemSend(c io.ReadWriter, data []byte, callback func(int)) error {
+	return modemSend(c, data, SHORT_PACKET_PAYLOAD_LEN, callback)
 }
 
-func ModemSend1K(c io.ReadWriter, data []byte) error {
-	return modemSend(c, data, LONG_PACKET_PAYLOAD_LEN)
+func ModemSend1K(c io.ReadWriter, data []byte, callback func(int)) error {
+	return modemSend(c, data, LONG_PACKET_PAYLOAD_LEN, callback)
 }
 
-func modemSend(c io.ReadWriter, data []byte, packetPayloadLen int) error {
+func modemSend(c io.ReadWriter, data []byte, packetPayloadLen int, callback func(int)) error {
 	oBuffer := make([]byte, 1)
 
 	for oBuffer[0] != POLL {
@@ -136,6 +136,7 @@ func modemSend(c io.ReadWriter, data []byte, packetPayloadLen int) error {
 	failed := 0
 	var currentBlock = 0
 	for currentBlock < blocks && failed < 10 {
+		callback(currentBlock)
 		if int(int(currentBlock+1)*int(packetPayloadLen)) > len(data) {
 			sendBlock(c, currentBlock+1, data[currentBlock*packetPayloadLen:], packetPayloadLen)
 		} else {
